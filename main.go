@@ -13,23 +13,28 @@ import (
 
 func serve(requests chan bool, ticker <-chan time.Time, done chan bool) {
 	sum := 0
-	count := 1
+	count := -2
 	i := 0
 	for {
 		select {
 			case <-requests:
-				sum++
+				if count >= 1 {
+					sum++
+				}
 				i++
-			case time := <-ticker:
-				reportText := color.New(color.FgBlack).Add(color.BgGreen).PrintfFunc()
-				pointText := color.New(color.FgRed).PrintfFunc()
+			case tickTime := <-ticker:
+				if count >= 1 {
+					reportText := color.New(color.FgBlack).Add(color.BgGreen).PrintfFunc()
+					pointText := color.New(color.FgRed).PrintfFunc()
 
-				fmt.Printf("%s\n", time)
-				reportText("[Report]")
-				fmt.Printf(" Served ")
-				pointText("%d", i)
-				fmt.Printf(" Requests, TPS: ")
-				pointText("%.2f\n\n", float64(sum)/float64(count))
+					fmt.Printf("%s\n", tickTime.Format(time.UnixDate))
+					reportText("[Report]")
+					fmt.Printf(" Served ")
+					pointText("%d", i)
+					fmt.Printf(" Requests, TPS: ")
+					pointText("%.2f\n\n", float64(sum)/float64(count))
+				}
+
 				count++
 				i = 0
 
