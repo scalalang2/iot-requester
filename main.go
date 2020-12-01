@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func serve(requests chan bool, ticker <-chan time.Time) {
+func serve(requests chan bool, ticker <-chan time.Time, done chan bool) {
 	sum := 0
 	count := 1
 	i := 0
@@ -29,6 +29,10 @@ func serve(requests chan bool, ticker <-chan time.Time) {
 				pointText("%.2f\n\n", float64(sum)/float64(count))
 				count++
 				i = 0
+
+				if count == 21 {
+					done<-true
+				}
 		}
 	}
 }
@@ -55,7 +59,7 @@ func main() {
 	}
 
 	fmt.Println("Start to make requests")
-	go serve(requests, ticker.C);
+	go serve(requests, ticker.C, done);
 	go makeRequests(requests, workQueue);
 
 	<-done
