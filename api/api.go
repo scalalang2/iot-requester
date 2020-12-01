@@ -3,38 +3,57 @@ package api
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
+	"strconv"
+	"sync"
 )
 
 var (
 	SERVER_URL = "http://220.76.205.230:3000/"
+	Params = make([]*ReqParams, 20000)
+	Number = 0
+	Alerts = []string{"warning", "normal", "danger"}
 )
 
 type ReqParams struct {
-	id string
-	keyValue string
-	deviceId string
-	sensorId string
-	sensorCategoryId string
-	sensorValue string
-	sensorAlertMsg string
-	sensorDescription string
-	eventCreationTime string
+	Id string
+	KeyValue string
+	DeviceId string
+	SensorId string
+	SensorCategoryId string
+	SensorValue string
+	SensorAlertMsg string
+	SensorDescription string
+	EventCreationTime string
+}
+
+func PrepareReqBody() {
+	for i := 0; i < 20000; i++ {
+		localParams := ReqParams {
+			fmt.Sprintf("ID_%d", i+1),
+			strconv.Itoa(rand.Intn(10)),
+			strconv.Itoa(rand.Intn(100)),
+			strconv.Itoa(rand.Intn(6)),
+			strconv.Itoa(rand.Intn(3)),
+			strconv.Itoa(rand.Intn(5) + 20),
+			Alerts[rand.Intn(3)],
+			"normal",
+			strconv.Itoa(rand.Intn(10) + 15),
+		}
+		Params[i] = &localParams
+	}
 }
 
 func createParams() *ReqParams {
-	params := ReqParams {
-		"idTesting2",
-		"1",
-		"3",
-		"5",
-		"2",
-		"12",
-		"warning",
-		"error",
-		"22",
-	}
-	return &params
+	mux := &sync.Mutex{}
+	mux.Lock()
+
+	localParams := Params[Number]
+
+	Number++
+	mux.Unlock()
+	return localParams
 }
 
 func CreateRequest(requests chan bool, queues chan bool) {
@@ -42,15 +61,15 @@ func CreateRequest(requests chan bool, queues chan bool) {
 
 	url := fmt.Sprintf("%slocationSet?id=%s&keyValue=%s&deviceId=%s&sensorId=%s&sensorCategoryId=%s&sensorValue=%s&sensorAlertMsg=%s&sensorDescription=%s&eventCreateTime=%s",
 		SERVER_URL,
-		params.id,
-		params.keyValue,
-		params.deviceId,
-		params.sensorId,
-		params.sensorCategoryId,
-		params.sensorValue,
-		params.sensorAlertMsg,
-		params.sensorDescription,
-		params.eventCreationTime)
+		params.Id,
+		params.KeyValue,
+		params.DeviceId,
+		params.SensorId,
+		params.SensorCategoryId,
+		params.SensorValue,
+		params.SensorAlertMsg,
+		params.SensorDescription,
+		params.EventCreationTime)
 
 	resp, err := http.Post(url, "application/json", nil)
 

@@ -1,10 +1,13 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
 	"github.com/fatih/color"
 	"iot-requester/api"
+	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -47,15 +50,54 @@ func makeRequests(requests chan bool, queues chan bool) {
 	}
 }
 
+func reportCSV() {
+	params := api.Params
+	file, err := os.Create("input.csv")
+	if err != nil {
+		log.Println("Cannot report data to csv file.")
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	for i := 0; i < 20000; i++ {
+		item := params[i]
+		if item == nil {
+			break;
+		}
+
+		err = writer.Write([]string{
+			item.Id,
+			item.KeyValue,
+			item.DeviceId,
+			item.SensorId,
+			item.SensorCategoryId,
+			item.SensorValue,
+			item.SensorAlertMsg,
+			item.SensorDescription,
+			item.EventCreationTime,
+		})
+
+		if err != nil {
+			log.Println("Cannot report data to csv file.")
+			log.Fatal(err)
+		}
+	}
+}
+
 func main() {
-	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = 1000
+	api.PrepareReqBody()
+	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = 2000
 
 	done := make(chan bool)
 	ticker := time.NewTicker(time.Second)
 	requests := make(chan bool, 1000)
 	workQueue := make(chan bool, 1000)
+
 	for i := 0; i < 1000; i++ {
-		workQueue<-true;
+		workQueue<-true
 	}
 
 	fmt.Println("Start to make requests")
@@ -63,4 +105,9 @@ func main() {
 	go makeRequests(requests, workQueue);
 
 	<-done
+	reportCSV()
+	fmt.Println()
+
+	greenColor := color.New(color.FgGreen).PrintlnFunc()
+	greenColor("Saved input.csv file.")
 }
