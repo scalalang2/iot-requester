@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	SERVER_URL = "http://220.76.205.230:3000/"
+	SERVER_URL = "<SERVER_URI>"
 	Params = make([]*ReqParams, 20000)
 	Number = 0
 	Alerts = []string{"warning", "normal", "danger"}
